@@ -1,0 +1,301 @@
+:root {
+  --color-bg: #2f2f2f;
+  --color-bg-alt: #1f1f1f;
+  --color-border-dark: #042b30;
+  --color-border-bright: #f2f2f2;
+  --color-text: white;
+  --color-emph: #00bcd4;
+  --color-emph-dark: #00616c;
+  --color-disabled: #8b8b8b;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--color-emph-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-bright);
+  border-radius: 15px;
+}
+
+body {
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  font-family: 'JetBrains Mono';
+  font-size: 85%;
+}
+
+.toolbar {
+  display: block;
+}
+
+.toolbar>div {
+  display: inline-block;
+}
+
+.toolbar>div>span {
+  display: block;
+}
+
+@media screen and (min-width: 1080px) {
+
+  .toolbar,
+  #graph {
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@media screen and (max-width: 1080px) {
+
+  .toolbar,
+  #graph {
+    width: 100%;
+  }
+}
+
+/*
+ * Checklist
+ */
+.checklist {
+  background-color: var(--color-bg-alt);
+  padding: 5px 10px 5px 10px;
+  line-height: 1.5;
+}
+
+.checklist label:not(:last-child) {
+  margin-right: 10px;
+}
+
+.checklist input {
+  margin-right: 5px !important;
+}
+
+@supports (-webkit-appearance: none) or (-moz-appearance: none) {
+
+  input[type=checkbox],
+  input[type=radio] {
+    --active: var(--color-emph);
+    --active-inner: var(--color-text);
+    --focus: 2px var(--color-emph-dark);
+    --border: var(--color-border-dark);
+    --border-hover: var(--color-border-dark);
+    --background: var(--color-text);
+    --disabled: var(--color-disabled);
+    --disabled-inner: var(--color-disabled);
+    height: 21px;
+    outline: none;
+    display: inline-block;
+    vertical-align: top;
+    position: relative;
+    margin: 0;
+    cursor: pointer;
+    border: 1px solid var(--bc, var(--border));
+    background: var(--b, var(--background));
+    transition: background 0.3s, border-color 0.3s, box-shadow 0.2s;
+  }
+
+  input[type=checkbox]:after,
+  input[type=radio]:after {
+    content: "";
+    display: block;
+    left: 0;
+    top: 0;
+    position: absolute;
+    transition: transform var(--d-t, 0.3s) var(--d-t-e, ease), opacity var(--d-o, 0.2s);
+  }
+
+  input[type=checkbox]:checked,
+  input[type=radio]:checked {
+    --b: var(--active);
+    --bc: var(--active);
+    --d-o: .3s;
+    --d-t: .6s;
+    --d-t-e: cubic-bezier(.2, .85, .32, 1.2);
+  }
+
+  input[type=checkbox]:disabled,
+  input[type=radio]:disabled {
+    --b: var(--disabled);
+    cursor: not-allowed;
+    opacity: 0.9;
+  }
+
+  input[type=checkbox]:disabled:checked,
+  input[type=radio]:disabled:checked {
+    --b: var(--disabled-inner);
+    --bc: var(--border);
+  }
+
+  input[type=checkbox]:disabled+label,
+  input[type=radio]:disabled+label {
+    cursor: not-allowed;
+  }
+
+  input[type=checkbox]:hover:not(:checked):not(:disabled),
+  input[type=radio]:hover:not(:checked):not(:disabled) {
+    --bc: var(--border-hover);
+  }
+
+  input[type=checkbox]:focus,
+  input[type=radio]:focus {
+    box-shadow: 0 0 0 var(--focus);
+  }
+
+  input[type=checkbox]:not(.switch),
+  input[type=radio]:not(.switch) {
+    width: 21px;
+  }
+
+  input[type=checkbox]:not(.switch):after,
+  input[type=radio]:not(.switch):after {
+    opacity: var(--o, 0);
+  }
+
+  input[type=checkbox]:not(.switch):checked,
+  input[type=radio]:not(.switch):checked {
+    --o: 1;
+  }
+
+  input[type=checkbox]+label,
+  input[type=radio]+label {
+    font-size: 14px;
+    line-height: 21px;
+    display: inline-block;
+    vertical-align: top;
+    cursor: pointer;
+    margin-left: 4px;
+  }
+
+  input[type=checkbox]:not(.switch) {
+    border-radius: 7px;
+  }
+
+  input[type=checkbox]:not(.switch):after {
+    width: 5px;
+    height: 9px;
+    border: 2px solid var(--active-inner);
+    border-top: 0;
+    border-left: 0;
+    left: 7px;
+    top: 4px;
+    transform: rotate(var(--r, 20deg));
+  }
+
+  input[type=checkbox]:not(.switch):checked {
+    --r: 43deg;
+  }
+
+  input[type=checkbox].switch {
+    width: 38px;
+    border-radius: 11px;
+  }
+
+  input[type=checkbox].switch:after {
+    left: 2px;
+    top: 2px;
+    border-radius: 50%;
+    width: 15px;
+    height: 15px;
+    background: var(--ab, var(--border));
+    transform: translateX(var(--x, 0));
+  }
+
+  input[type=checkbox].switch:checked {
+    --ab: var(--active-inner);
+    --x: 17px;
+  }
+
+  input[type=checkbox].switch:disabled:not(:checked):after {
+    opacity: 0.6;
+  }
+}
+
+/*
+ * Dropdown
+ */
+.multi-dropdown {
+  --active: var(--color-emph);
+  --focus: 2px var(--color-emph-dark);
+  cursor: pointer;
+}
+
+.multi-dropdown .Select-menu-outer {
+  background: var(--color-bg-alt);
+  color: var(--color-text);
+  border: 0;
+  border-radius: 0 0 5px 5px;
+  overflow: hidden;
+}
+
+.multi-dropdown .Select-value {
+  color: var(--active);
+}
+
+.multi-dropdown .Select.is-focused:not(.is-open)>.Select-control {
+  box-shadow: var(--focus);
+  border-color: var(--active);
+}
+
+.multi-dropdown .Select-control {
+  /* border: 2; */
+  border: 0;
+  border-radius: 5px 5px 0 0;
+  background-color: var(--color-bg-alt);
+}
+
+.multi-dropdown .VirtualizedSelectFocusedOption {
+  color: var(--color-text);
+  background-color: var(--color-emph-dark);
+}
+
+.multi-dropdown .Select-control .Select-value-label {
+  color: var(--color-text) !important;
+  /* color: transparent; */
+  /* text-shadow: 0 0 15px var(--color-emph); */
+}
+
+.multi-dropdown>span,
+.checklist+span {
+  opacity: 0.5;
+  border: 1px solid var(--color-emph);
+  background-color: var(--color-emph-dark);
+  display: block;
+  width: 120px;
+  margin: 0 auto 0 auto;
+  text-align: center;
+}
+
+.multi-dropdown>span {
+  border-radius: 50px 50px 0px 0px;
+  padding: 0.25em 1.5em 0em 1.5em;
+  border-bottom: 0;
+}
+
+.checklist+span {
+  border-radius: 0px 0px 50px 50px;
+  padding: 0em 1.5em 0.25em 1.5em;
+  border-top: 0;
+}
+
+.multi-dropdown {
+  margin-right: 25px;
+}
+
+.hover-note {
+  color: var(--color-bg-alt);
+}
+
+/* Individual */
+#type-checklist {
+  float: right;
+}
+
+#graph-main .js-plotly-plot {
+  height: 720px !important;
+}
