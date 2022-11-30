@@ -1,5 +1,5 @@
 {
-  "python.defaultInterpreterPath": "plotly/.venv/bin/python",
+  "python.defaultInterpreterPath": ".venv/bin/python",
   "[python]": {
     "editor.insertSpaces": true,
     "editor.tabSize": 4,
