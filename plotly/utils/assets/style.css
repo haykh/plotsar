@@ -41,11 +41,12 @@ body {
   display: block;
 }
 
+
 @media screen and (min-width: 1080px) {
 
   .toolbar,
-  #graph {
-    width: 80%;
+  #graph-main {
+    width: 65%;
     margin-left: auto;
     margin-right: auto;
   }
@@ -54,9 +55,16 @@ body {
 @media screen and (max-width: 1080px) {
 
   .toolbar,
-  #graph {
+  #graph-main {
     width: 100%;
   }
+}
+
+
+#graph-main,
+#graph-info {
+  vertical-align: top;
+  display: inline-block;
 }
 
 /*

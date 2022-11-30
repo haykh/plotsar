@@ -8,11 +8,12 @@ import numpy as np
 from num2tex import num2tex
 from num2tex import configure as num2tex_configure
 
-num2tex_configure(exp_format="cdot")
+num2tex_configure(exp_format="cdot", help_text=False, display_singleton=False)
 
 import json
 
 from .defs import *
+from .physics import *
 
 
 def to_label(label, unit):
@@ -20,12 +21,16 @@ def to_label(label, unit):
 
 
 def exp_tex(float_number):
-    return "{:.2g}".format(num2tex(float_number))
+    ret = "{:.2g}".format(num2tex(float_number))
+    if ret.startswith("\cdot"):
+        ret = ret.replace("\cdot", "")
+    return ret
 
 
 layout_plotly = go.Layout(
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
+    margin=dict(l=20, r=20, t=20, b=20),
     xaxis={
         "zerolinecolor": "rgba(255,255,255,0.45)",
         "exponentformat": "power",
@@ -49,7 +54,7 @@ layout_plotly = go.Layout(
         "gridcolor": "rgba(255,255,255,0.05)",
     },
     uirevision="constant",
-    modebar={"orientation": "v"},
+    modebar={"orientation": "h"},
     font_family="JetBrains Mono",
 )
 external_stylesheets = [
@@ -69,7 +74,6 @@ external_stylesheets = [
 ]
 external_scripts = [
     "https://polyfill.io/v3/polyfill.min.js?features=es6",
-    "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js",
 ]
 
 
@@ -78,16 +82,17 @@ def PulsarCard(pulsar):
         period = rf"$P = {{{exp_tex(pulsar['P0'] * 1000)}}}~\textrm{{ms}}$"
     else:
         period = rf"$P = {{{exp_tex(pulsar['P0'])}}}~\textrm{{s}}$"
+    pdot = rf"\(\dot{{P}} = {{{exp_tex(pulsar['P1'])}}}\)"
+    rlc = rf"$R_{{\rm LC}} = {{{exp_tex(pulsar['RLC'])}}}~\textrm{{km}}$"
+    bstar = rf"$B_* = {{{exp_tex(pulsar['Bsurf'])}}}~\textrm{{G}}$"
+    edot = rf"$\dot{{E}} = {{{exp_tex(pulsar['Edot'])}}}~\textrm{{erg/s}}$"
     return [
         dash.html.H1(pulsar["Name"]),
-        period,
-        dash.html.Br(),
-        rf"$\dot{{P}} = {{{exp_tex(pulsar['P1'])}}}$",
-        dash.html.Br(),
-        rf"$B_{{\rm surf}} = {{{exp_tex(pulsar['Bsurf'])}}}~\textrm{{G}}$",
-        dash.html.Br(),
-        rf"$\dot{{E}} = {{{exp_tex(pulsar['Edot'])}}}~\textrm{{erg/s}}$",
-        dash.html.Br(),
+        dash.html.P(period),
+        dash.html.P(pdot),
+        dash.html.P(bstar),
+        dash.html.P(edot),
+        dash.html.P(rlc),
     ]
 
 
@@ -106,7 +111,7 @@ class Plotter:
                     ]
                 ),
                 dash.dcc.Dropdown(
-                    plottable_columns,
+                    list(plottable_columns.keys()),
                     value="P0",
                     multi=False,
                     searchable=False,
@@ -124,7 +129,7 @@ class Plotter:
                     ]
                 ),
                 dash.dcc.Dropdown(
-                    plottable_columns,
+                    list(plottable_columns.keys()),
                     value="P1",
                     multi=False,
                     searchable=False,
@@ -154,6 +159,9 @@ class Plotter:
         data_fermi = pd.DataFrame(
             {k: [d[k][0] for d in data_fermi] for k in data_fermi[0].keys()}
         )
+        data_atnf["Bsurf"] = ComputeBsurf(data_atnf)
+        data_atnf["RLC"] = ComputeRLC(data_atnf)
+        units_atnf["RLC"] = "km"
         data = pd.merge(
             data_fermi, data_atnf, on="Name", how="outer", indicator="Catalog"
         )
@@ -171,20 +179,6 @@ class Plotter:
         )
         self.app.layout = dash.html.Div(
             [
-                # dash.html.Div(
-                #     [
-                #         # self.catalog_checklist,
-                #         # self.status_checklist,
-                #         #  self.type_checklist
-                #     ],
-                #     className="toolbar",
-                # ),
-                dash.dcc.Graph(
-                    id="graph-main",
-                    clear_on_unhover=True,
-                    config={"displaylogo": False},
-                ),
-                dash.dcc.Tooltip(id="graph-tooltip"),
                 dash.html.Div(
                     [
                         self.x_dropdown,
@@ -192,45 +186,36 @@ class Plotter:
                     ],
                     className="toolbar",
                 ),
+                dash.html.Div(
+                    children=[
+                        dash.dcc.Graph(
+                            id="graph-main",
+                            config={"displaylogo": False},
+                        ),
+                        dash.html.Div(
+                            "Click on pulsar to display",
+                            id="graph-info",
+                        ),
+                    ],
+                    id="graph-datavis",
+                ),
             ]
         )
 
         @self.app.callback(
-            dash.Output("graph-tooltip", "show"),
-            dash.Output("graph-tooltip", "bbox"),
-            dash.Output("graph-tooltip", "children"),
-            dash.Input("graph-main", "hoverData"),
+            dash.Output("graph-info", "children"),
+            dash.Input("graph-main", "clickData"),
         )
-        def display_hover(hoverData):
-            if hoverData is None:
-                return False, dash.no_update, dash.no_update
-
-            # # demo only shows the first point, but other points may also be available
-            pt = hoverData["points"][0]
-            bbox = pt["bbox"]
-            # num = pt["pointNumber"]
-            take_data = self.data[
-                ~((self.data["Catalog"] == "ATNF") ^ (pt["curveNumber"] == 0))
-            ]
-
-            # df_row = df.iloc[num]
-            # img_src = df_row["IMG_URL"]
-            # name = df_row["NAME"]
-            # form = df_row["FORM"]
-            # desc = df_row["DESC"]
-            # if len(desc) > 300:
-            #     desc = desc[:100] + "..."
-
-            # print (take_data.iloc[pt["pointNumber"]],)
-            pulsar = take_data.iloc[pt["pointNumber"]]
-            children = [
-                dash.html.Div(
-                    children=PulsarCard(pulsar),
-                    # style={"background-color": "black", "white-space": "normal"},
-                    className="hover-note",
-                )
-            ]
-            return True, bbox, children
+        def click_callback(clickData):
+            if clickData is None:
+                return "Click on pulsar to display"
+            else:
+                pt = clickData["points"][0]
+                take_data = self.data[
+                    ~((self.data["Catalog"] == "ATNF") ^ (pt["curveNumber"] == 0))
+                ]
+                pulsar = take_data.iloc[pt["pointNumber"]]
+                return PulsarCard(pulsar)
 
         @self.app.callback(
             dash.Output("graph-main", "figure"),
@@ -238,32 +223,10 @@ class Plotter:
             dash.Input("y-select", "value"),
         )
         def update_graph(xaxis, yaxis) -> go.Figure:
-            #     statuses = list(
-            #         itertools.chain(*[status_lookup[status_help[v]]
-            #                         for v in status_value])
-            #     )
-            #     types = [query_lookup_r[t] for t in type_value]
-            #     self.pihole_data.filter(clients, statuses, types)
             if xaxis == None or yaxis == None:
                 labels = dict(x="x", y="y")
                 fig = px.scatter(x=[0], y=[0], labels=labels)
             else:
-                # atnf = Data(
-                #     ([d[xaxis][0] for d in self.data], self.data[0][xaxis][1], xaxis),
-                #     ([d[yaxis][0] for d in self.data], self.data[0][yaxis][1], yaxis),
-                # )
-                # fermi = Data(
-                #     (
-                #         [d[xaxis][0] for d in self.data if d["Fermi"] is not None],
-                #         self.data[0][xaxis][1],
-                #         xaxis,
-                #     ),
-                #     (
-                #         [d[yaxis][0] for d in self.data if d["Fermi"] is not None],
-                #         self.data[0][yaxis][1],
-                #         yaxis,
-                #     ),
-                # )
                 prefilter_atnf = self.data[self.data["Catalog"] == "ATNF"]
                 fig = go.Figure()
                 fig.add_trace(
@@ -294,7 +257,6 @@ class Plotter:
                     xaxis_title=to_label(xaxis, self.data_units[xaxis]),
                     yaxis_title=to_label(yaxis, self.data_units[yaxis]),
                 )
-                fig.update_traces(hoverinfo="none", hovertemplate=None)
             fig.update_layout(layout_plotly)
             return fig
 
@@ -350,3 +312,54 @@ class Plotter:
 #     )
 # ], className="multi-dropdown")
 # self.graph =
+
+
+# @self.app.callback(
+#             dash.Output("graph-tooltip", "show"),
+#             dash.Output("graph-tooltip", "bbox"),
+#             dash.Output("graph-tooltip", "children"),
+#             dash.Input("graph-main", "hoverData"),
+#         )
+#         def display_hover(hoverData):
+#             if hoverData is None:
+#                 return False, dash.no_update, dash.no_update
+
+#             # # demo only shows the first point, but other points may also be available
+#             pt = hoverData["points"][0]
+#             bbox = pt["bbox"]
+#             # num = pt["pointNumber"]
+#             take_data = self.data[
+#                 ~((self.data["Catalog"] == "ATNF") ^ (pt["curveNumber"] == 0))
+#             ]
+
+#             # df_row = df.iloc[num]
+#             # img_src = df_row["IMG_URL"]
+#             # name = df_row["NAME"]
+#             # form = df_row["FORM"]
+#             # desc = df_row["DESC"]
+#             # if len(desc) > 300:
+#             #     desc = desc[:100] + "..."
+
+#             # print (take_data.iloc[pt["pointNumber"]],)
+
+#             pulsar = take_data.iloc[pt["pointNumber"]]
+
+#             fig = go.Figure()
+#             graph = dash.dcc.Graph(
+#                 id="graph-sec",
+#                 config={"displaylogo": False},
+#                 figure=fig
+#             )
+#             fig.update_layout(
+#                 xaxis=dict(type="log", exponentformat="power"),
+#                 yaxis=dict(type="log", exponentformat="power")
+#             )
+
+#             children = [
+#                 dash.html.Div(
+#                     children=[*PulsarCard(pulsar), dash.html.Div(graph)],
+#                     # style={"background-color": "black", "white-space": "normal"},
+#                     className="hover-note",
+#                 )
+#             ]
+#             return True, bbox, children
