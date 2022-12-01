@@ -104,11 +104,14 @@ class Plotter:
         self.data = data.sort_values(by="Catalog", ascending=False)
         for k, v in additional_quantities.items():
             self.data[k] = v[2](self.data)
-        self.data_units = {
-            **units_fermi,
-            **units_atnf,
-            **{k: v[1] for k, v in additional_quantities.items()},
-        }
+        self.data_units = {}
+        self.data_units.update(units_fermi)
+        self.data_units.update(units_atnf)
+        self.data_units.update({k: v[1] for k, v in additional_quantities.items()})
+        #     **units_fermi,
+        #     **units_atnf,
+        #     **{k: v[1] for k, v in additional_quantities.items()},
+        # }
 
     def deploy(self, debug: bool = False, port: int = 8050):
         self.app = dash.Dash(
@@ -116,6 +119,9 @@ class Plotter:
             external_stylesheets=external_stylesheets,
             external_scripts=external_scripts,
         )
+        configs = {}
+        configs.update({"displaylogo": False})
+        configs.update(save_config)
         self.app.index_string = index_string
         self.app.layout = dash.html.Div(
             [
@@ -127,10 +133,7 @@ class Plotter:
                     children=[
                         dash.dcc.Graph(
                             id="graph-main",
-                            config={
-                                "displaylogo": False,
-                                **save_config,
-                            },
+                            config=configs,
                         ),
                         dash.html.Div(
                             "Click on pulsar to display",
