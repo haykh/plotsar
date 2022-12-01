@@ -13,6 +13,13 @@ from .physics import *
 from .pulsar import PulsarCard
 
 
+import os
+
+curdir = os.path.dirname(__file__) + "/../data"
+data_fermi_path = curdir + "/fermi.json"
+data_atnf_path = curdir + "/atnf.json"
+
+
 class Plotter:
     def __init__(self):
         self.app = None
@@ -76,44 +83,6 @@ class Plotter:
             className="multi-dropdown",
         )
 
-    def __del__(self):
-        del self.data
-        del self.data_units
-        del self.app
-
-    def loadData(self):
-        del self.data
-        data_fermi = json.load(open("data/fermi.json", "r"))
-        data_atnf = json.load(open("data/atnf.json", "r"))
-        units_atnf = {k: v[1] if v[1] != "" else None for k, v in data_atnf[0].items()}
-        data_atnf = pd.DataFrame(
-            {k: [d[k][0] for d in data_atnf] for k in data_atnf[0].keys()}
-        )
-        units_fermi = {
-            k: v[1] if v[1] != "" else None for k, v in data_fermi[0].items()
-        }
-        data_fermi = pd.DataFrame(
-            {k: [d[k][0] for d in data_fermi] for k in data_fermi[0].keys()}
-        )
-        data = pd.merge(
-            data_fermi, data_atnf, on="Name", how="outer", indicator="Catalog"
-        )
-        data["Catalog"].replace(
-            {"left_only": "Fermi", "right_only": "ATNF", "both": "Fermi"}, inplace=True
-        )
-        self.data = data.sort_values(by="Catalog", ascending=False)
-        for k, v in additional_quantities.items():
-            self.data[k] = v[2](self.data)
-        self.data_units = {}
-        self.data_units.update(units_fermi)
-        self.data_units.update(units_atnf)
-        self.data_units.update({k: v[1] for k, v in additional_quantities.items()})
-        #     **units_fermi,
-        #     **units_atnf,
-        #     **{k: v[1] for k, v in additional_quantities.items()},
-        # }
-
-    def deploy(self, debug=False, port=8051):
         self.app = dash.Dash(
             __name__,
             external_stylesheets=external_stylesheets,
@@ -230,4 +199,40 @@ class Plotter:
             return fig
 
         pio.templates.default = "plotly_dark"
+
+    def __del__(self):
+        del self.data
+        del self.data_units
+        del self.app
+
+    def loadData(self):
+        del self.data
+        data_fermi = json.load(open(data_fermi_path, "r"))
+        data_atnf = json.load(open(data_atnf_path, "r"))
+        units_atnf = {k: v[1] if v[1] != "" else None for k, v in data_atnf[0].items()}
+        data_atnf = pd.DataFrame(
+            {k: [d[k][0] for d in data_atnf] for k in data_atnf[0].keys()}
+        )
+        units_fermi = {
+            k: v[1] if v[1] != "" else None for k, v in data_fermi[0].items()
+        }
+        data_fermi = pd.DataFrame(
+            {k: [d[k][0] for d in data_fermi] for k in data_fermi[0].keys()}
+        )
+        data = pd.merge(
+            data_fermi, data_atnf, on="Name", how="outer", indicator="Catalog"
+        )
+        data["Catalog"].replace(
+            {"left_only": "Fermi", "right_only": "ATNF", "both": "Fermi"}, inplace=True
+        )
+        self.data = data.sort_values(by="Catalog", ascending=False)
+        for k, v in additional_quantities.items():
+            self.data[k] = v[2](self.data)
+        self.data_units = {
+            **units_fermi,
+            **units_atnf,
+            **{k: v[1] for k, v in additional_quantities.items()},
+        }
+
+    def deploy(self, debug=False, port=8050):
         self.app.run_server(debug=debug, port=port)
