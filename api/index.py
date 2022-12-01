@@ -1,5 +1,6 @@
 from utils.plotter import Plotter
 
-if __name__ == "__main__":
-    plot = Plotter()
-    plot.deploy()
+# if __name__ == "__main__":
+plot = Plotter()
+plot.deploy()
+app = plot.app
