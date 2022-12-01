@@ -14,7 +14,7 @@ from .pulsar import PulsarCard
 
 
 class Plotter:
-    def __init__(self) -> None:
+    def __init__(self):
         self.app = None
         self.data = None
         self.data_units = None
@@ -76,12 +76,12 @@ class Plotter:
             className="multi-dropdown",
         )
 
-    def __del__(self) -> None:
+    def __del__(self):
         del self.data
         del self.data_units
         del self.app
 
-    def loadData(self) -> None:
+    def loadData(self):
         del self.data
         data_fermi = json.load(open("data/fermi.json", "r"))
         data_atnf = json.load(open("data/atnf.json", "r"))
@@ -110,7 +110,7 @@ class Plotter:
             **{k: v[1] for k, v in additional_quantities.items()},
         }
 
-    def deploy(self, debug: bool = False, port: int = 8050) -> None:
+    def deploy(self, debug: bool = False, port: int = 8050):
         self.app = dash.Dash(
             __name__,
             external_stylesheets=external_stylesheets,
@@ -163,7 +163,7 @@ class Plotter:
             dash.Input("y-select", "value"),
             dash.Input("col-select", "value"),
         )
-        def update_graph(xaxis, yaxis, col) -> go.Figure:
+        def update_graph(xaxis, yaxis, col):
             if xaxis == None or yaxis == None or col == None:
                 labels = dict(x="x", y="y")
                 fig = px.scatter(x=[0], y=[0], labels=labels)
@@ -193,7 +193,7 @@ class Plotter:
                             "Surface B-field: %{customdata[4]:.2e}G",
                             "Spindown power: %{customdata[5]:.2e}erg/s",
                             "LC B-field: %{customdata[6]:.2e}G",
-                            "<extra></extra>"
+                            "<extra></extra>",
                         ]
                     )
                 )
