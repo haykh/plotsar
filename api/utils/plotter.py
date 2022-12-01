@@ -113,7 +113,7 @@ class Plotter:
         #     **{k: v[1] for k, v in additional_quantities.items()},
         # }
 
-    def deploy(self, debug=False, port=8050):
+    def deploy(self, debug=False, port=8051):
         self.app = dash.Dash(
             __name__,
             external_stylesheets=external_stylesheets,
